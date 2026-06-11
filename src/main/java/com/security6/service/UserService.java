@@ -1,5 +1,6 @@
 package com.security6.service;
 
+import com.security6.dto.LoginResponse;
 import com.security6.entity.User;
 import com.security6.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -12,6 +13,8 @@ import org.springframework.stereotype.Service;
 
 @Service
 public class UserService {
+
+    private static final long TOKEN_EXPIRY_MS = 1000L * 60 * 60 * 10;
 
     @Autowired
     private UserRepository userRepository;
@@ -30,14 +33,15 @@ public class UserService {
         return userRepository.save(user);
     }
 
-    public String verify(User user) {
+    public LoginResponse verify(User user) {
         try {
             Authentication authentication = authenticationManager.authenticate(
                     new UsernamePasswordAuthenticationToken(user.getUserName(), user.getPassword())
             );
-            return jwtService.generate(authentication.getName());
+            String token = jwtService.generate(authentication.getName());
+            return new LoginResponse(token, authentication.getName(), TOKEN_EXPIRY_MS);
         } catch (AuthenticationException e) {
-            return "failure";
+            return null;
         }
     }
 }
